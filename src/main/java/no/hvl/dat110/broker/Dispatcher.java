@@ -1,13 +1,12 @@
 package no.hvl.dat110.broker;
 
-import java.util.Set;
-import java.util.Collection;
-
-import no.hvl.dat110.common.TODO;
 import no.hvl.dat110.common.Logger;
 import no.hvl.dat110.common.Stopable;
 import no.hvl.dat110.messages.*;
 import no.hvl.dat110.messagetransport.Connection;
+
+import java.util.Collection;
+import java.util.Set;
 
 public class Dispatcher extends Stopable {
 
@@ -108,44 +107,51 @@ public class Dispatcher extends Stopable {
 
 	public void onCreateTopic(CreateTopicMsg msg) {
 
-		Logger.log("onCreateTopic:" + msg.toString());
-		String topic = msg.getTopic();
-		storage.createTopic(topic);
+		// create the topic in the broker storage
+		// the topic is contained in the create topic message
 
+		Logger.log("onCreateTopic:" + msg.toString());
+		storage.createTopic(msg.getTopic());
 	}
 
 	public void onDeleteTopic(DeleteTopicMsg msg) {
 
+		// delete the topic from the broker storage
+		// the topic is contained in the delete topic message
+
 		Logger.log("onDeleteTopic:" + msg.toString());
-		String topic = msg.getTopic();
-		storage.deleteTopic(topic);
+		storage.deleteTopic(msg.getTopic());
 	}
 
 	public void onSubscribe(SubscribeMsg msg) {
 
-		Logger.log("onSubscribe:" + msg.toString());
-		String user = msg.getUser();
-		String topic = msg.getTopic();
-		storage.addSubscriber(user, topic);
+		// subscribe user to the topic
+		// user and topic is contained in the subscribe message
 
+		Logger.log("onSubscribe:" + msg.toString());
+		storage.addSubscriber(msg.getUser(), msg.getTopic());
 	}
 
 	public void onUnsubscribe(UnsubscribeMsg msg) {
 
+		// unsubscribe user to the topic
+		// user and topic is contained in the unsubscribe message
+
 		Logger.log("onUnsubscribe:" + msg.toString());
-		String user = msg.getUser();
-		String topic = msg.getTopic();
-		storage.removeSubscriber(user, topic);
+		storage.removeSubscriber(msg.getUser(), msg.getTopic());
 	}
 
 	public void onPublish(PublishMsg msg) {
-		Logger.log("onPublish: " + msg.toString());
-        Set<String> subscribers = storage.getSubscribers(msg.getTopic());
-        for (String user : subscribers) {
-            ClientSession client = storage.getSession(user);
-            if (client != null) {
-                client.send(msg);
-            }
-	}
+
+		// publish the message to clients subscribed to the topic
+		// topic and message is contained in the subscribe message
+		// messages must be sent using the corresponding client session objects
+
+		Logger.log("onPublish:" + msg.toString());
+		Set<String> users = storage.getSubscribers(msg.getTopic());
+
+		for (String user : users) {
+			storage.getSession(user).send(msg);
+		}
 	}
 }

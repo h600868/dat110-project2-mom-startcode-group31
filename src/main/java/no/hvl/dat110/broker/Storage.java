@@ -1,12 +1,10 @@
 package no.hvl.dat110.broker;
 
+import no.hvl.dat110.messagetransport.Connection;
+
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import no.hvl.dat110.common.TODO;
-import no.hvl.dat110.common.Logger;
-import no.hvl.dat110.messagetransport.Connection;
 
 public class Storage {
 
@@ -40,65 +38,56 @@ public class Storage {
 	public ClientSession getSession(String user) {
 
 		ClientSession session = clients.get(user);
-
 		return session;
 	}
 
 	public Set<String> getSubscribers(String topic) {
 
 		return (subscriptions.get(topic));
-
 	}
 
 	public void addClientSession(String user, Connection connection) {
 
-		ClientSession clientSession = new ClientSession (user, connection);
-		clients.put(user, clientSession);	
-		
+		// add corresponding client session to the storage
+
+		ClientSession session = new ClientSession(user, connection);
+		clients.put(user, session);
 	}
 
 	public void removeClientSession(String user) {
 
-		ClientSession clientSession = getSession(user);
-		if (clientSession != null) {
-			clientSession.disconnect();
-			getSessions().remove(clientSession);
-		}
+		// disconnect the client (user), and remove client session for user from the storage
 		
-	
-		
+		ClientSession session = clients.remove(user);
+		session.disconnect();
 	}
 
 	public void createTopic(String topic) {
 
-		if (!subscriptions.containsKey(topic)) {
-			subscriptions.put(topic, ConcurrentHashMap.newKeySet());
-		}
+		// create topic in the storage
+
+		subscriptions.put(topic, ConcurrentHashMap.newKeySet());
 	}
 
 	public void deleteTopic(String topic) {
 
-		subscriptions.remove(topic);
+		// delete topic from the storage
 
+		subscriptions.remove(topic);
 	}
 
 	public void addSubscriber(String user, String topic) {
 
-		Set<String> subscribers = subscriptions.get(topic);
-		if (subscribers == null){
-			subscribers = ConcurrentHashMap.newKeySet();
-			subscriptions.put(topic, subscribers);
-		}
-		subscribers.add(user);
+		// add the user as subscriber to the topic
+
+		Set<String> users = subscriptions.get(topic);
+		users.add(user);
 	}
 
 	public void removeSubscriber(String user, String topic) {
 
-		Set<String> subscribers = subscriptions.get(topic);
-		if (subscribers != null) {
-			subscribers.remove(user);
-		}
-
+		// remove the user as subscriber to the topic
+		Set<String> users = subscriptions.get(topic);
+		users.remove(user);
 	}
-	
 }
